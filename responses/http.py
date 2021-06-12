@@ -13,3 +13,8 @@ class LoggedHttpResponseProxyMixin(BaseLoggedResponseMixin):
     to bring such responses to the same structure, however, logging is an important thing and
     we use that class to log the http responses.
     """
+
+
+__all__ = [
+    "LoggedHttpResponseProxyMixin",
+]

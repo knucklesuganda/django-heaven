@@ -10,7 +10,7 @@ class LoggedRedirectResponseMixin(BaseLoggedResponseMixin):
 
     @no_type_check
     def log_response_as_info(
-        self, redirect_to: str, kwargs: dict, log_message: str, redirect_code: int,
+        self, redirect_to: str, log_message: str, redirect_code: int, kwargs: dict = None,
     ) -> HttpResponseRedirect:
         """
         That function will call normal LoggedResponseMixin info function, but will return redirect instead.
@@ -24,11 +24,11 @@ class LoggedRedirectResponseMixin(BaseLoggedResponseMixin):
         super(LoggedRedirectResponseMixin, self).log_response_as_info(
             data=None, log_message=log_message, status_code=redirect_code,
         )
-        return HttpResponseRedirect(redirect_to, **kwargs)
+        return HttpResponseRedirect(redirect_to, **kwargs or {})
 
     @no_type_check
     def log_response_as_error(
-        self, redirect_to: str, kwargs: dict, log_message: str, redirect_code: int,
+        self, redirect_to: str, log_message: str, redirect_code: int, kwargs: dict = None,
     ) -> HttpResponseRedirect:
         """
         That function will call normal LoggedResponseMixin error function, but will return redirect instead.
@@ -42,8 +42,14 @@ class LoggedRedirectResponseMixin(BaseLoggedResponseMixin):
         super(LoggedRedirectResponseMixin, self).log_response_as_error(
             data=None, log_message=log_message, status_code=redirect_code,
         )
-        return HttpResponseRedirect(redirect_to, **kwargs)
+        return HttpResponseRedirect(redirect_to, **kwargs or {})
 
 
 class LoggedRedirectResponseProxyMixin(BaseLoggedResponseProxyMixin):
     """ Use that class to redirect the client to an already existing HttpResponseRedirect object """
+
+
+__all__ = [
+    'LoggedRedirectResponseMixin',
+    'LoggedRedirectResponseProxyMixin',
+]

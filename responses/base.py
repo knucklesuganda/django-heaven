@@ -16,9 +16,14 @@ class BaseLoggedResponseMixin:
 
     def __init__(self, *args, **kwargs):
         super(BaseLoggedResponseMixin, self).__init__(*args, **kwargs)
+        response_global_logger = RESPONSES_SETTINGS.get('LOGGER_OBJ')
 
-        if self.logger_obj is None and not RESPONSES_SETTINGS.get('LOGGER_OBJ'):
+        if self.logger_obj:
+            return
+        elif self.logger_obj is None and not response_global_logger:
             raise TypeError("There is no logger assigned in LoggedResponseMixin or in global settings")
+        elif response_global_logger:
+            self.logger_obj = response_global_logger
 
     def data_conversion_function(self, data, *args, **kwargs):
         """

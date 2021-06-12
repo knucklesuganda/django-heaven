@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    #'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -128,11 +130,47 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+TEST_LOGGER_NAME = 'test_logger'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'full': {
+            'format': '[{module} {asctime} {levelname}] {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'full',
+        },
+    },
+
+    'loggers': {
+        TEST_LOGGER_NAME: {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    }
+
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+}
+
 
 DJANGO_HEAVEN = {
     "RESPONSES": {
-        "DEFAULT_RESPONSE_VERB": "message",
-        "LOGGER_OBJ": logging,
+        #"DEFAULT_RESPONSE_VERB": "message",
+        "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
         "RAW_TYPES": (int, str, bytes, list),
     }
 }

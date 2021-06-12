@@ -37,4 +37,10 @@ class LoggedRESTResponseMixin(BaseLoggedResponseMixin):
 
 
 class LoggedRESTResponseProxyMixin(BaseLoggedResponseProxyMixin):
-    pass
+    """ Use that class if you already have Response(), but still want to log the results """
+
+
+__all__ = [
+    "LoggedRESTResponseMixin",
+    "LoggedRESTResponseProxyMixin",
+]

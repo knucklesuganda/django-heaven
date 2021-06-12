@@ -1,4 +1,6 @@
 """ That file contains responses for pure Django JsonResponse """
+import json
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 
@@ -28,21 +30,33 @@ class LoggedJsonResponseProxyMixin(BaseLoggedResponseProxyMixin):
     That class is used as a proxy for already built JsonResponse() objects. But, again, we check
     safe=True because the heaven must be safe.
     """
-    unsafe_error_message = "JsonResponse() must be a safe one. Change your response structure to a dictionary"
+
+    def test_response_is_safe(self, data):
+        """ Tests that the JsonResponse() is a safe one """
+        try:
+            if not isinstance(json.loads(data.content), dict):
+                raise ValueError(
+                    "JsonResponse() must be a safe one. Change your response structure to a dictionary"
+                )
+        except json.JSONDecodeError:
+            raise ValueError(f"Data provided in JsonResponse() cannot be decoded. Data: {data}")
 
     def log_response_as_info(self, data, log_message: str, *args, **kwargs):
-        if not data.safe:
-            raise ValueError(self.unsafe_error_message)
+        self.test_response_is_safe(data)
 
         return super(LoggedJsonResponseProxyMixin, self).log_response_as_info(
             data=data, log_message=log_message, *args, **kwargs
         )
 
     def log_response_as_error(self, data, log_message: str, *args, **kwargs):
-        if not data.safe:
-            raise ValueError(self.unsafe_error_message)
+        self.test_response_is_safe(data)
 
         return super(LoggedJsonResponseProxyMixin, self).log_response_as_info(
             data=data, log_message=log_message, *args, **kwargs
         )
 
+
+__all__ = [
+    'LoggedJsonResponseMixin',
+    'LoggedJsonResponseProxyMixin',
+]
