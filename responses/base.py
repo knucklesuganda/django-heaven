@@ -12,18 +12,7 @@ class BaseLoggedResponseMixin:
     settings.DJANGO_HEAVEN.RESPONSES.RAW_TYPES, then we convert it to a dictionary, or using
     self.data_conversion_function()
     """
-    logger_obj = None
-
-    def __init__(self, *args, **kwargs):
-        super(BaseLoggedResponseMixin, self).__init__(*args, **kwargs)
-        response_global_logger = RESPONSES_SETTINGS.get('LOGGER_OBJ')
-
-        if self.logger_obj:
-            return
-        elif self.logger_obj is None and not response_global_logger:
-            raise TypeError("There is no logger assigned in LoggedResponseMixin or in global settings")
-        elif response_global_logger:
-            self.logger_obj = response_global_logger
+    logger_obj = RESPONSES_SETTINGS.get('LOGGER_OBJ')
 
     def data_conversion_function(self, data, *args, **kwargs):
         """

@@ -13,13 +13,13 @@ class HeavenTestRESTView(LoggedRESTResponseMixin, ListAPIView):
         if randint(0, 1):
             return self.log_response_as_error(
                 data={"rest_error": "Framework error"},
-                log_message="REST error in test view",
+                log_message="REST error in test proxy view",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         return self.log_response_as_info(
-            data=[1, 2, 3, 4, 5, 6, 7, 8],
-            log_message="REST success in test view",
+            data="REST success in test view",
+            log_message="REST success in test proxy view",
             status_code=status.HTTP_200_OK,
         )
 
@@ -31,12 +31,12 @@ class HeavenTestRESTProxyView(LoggedRESTResponseProxyMixin, ListAPIView):
         if randint(0, 1):
             return self.log_response_as_error(
                 data=Response({"rest_error": "REST proxy error"}),
-                log_message="REST error in test view",
+                log_message="REST error in test proxy view",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         return self.log_response_as_info(
             data=Response("REST Proxy success"),
-            log_message="REST success in test view",
+            log_message="REST success in test proxy view",
             status_code=status.HTTP_200_OK,
         )

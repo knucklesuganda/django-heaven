@@ -159,6 +159,8 @@ LOGGING = {
 
 }
 
+test_logger = logging.getLogger(TEST_LOGGER_NAME)
+
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -172,5 +174,11 @@ DJANGO_HEAVEN = {
         #"DEFAULT_RESPONSE_VERB": "message",
         "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
         "RAW_TYPES": (int, str, bytes, list),
+    },
+    "SERVICES": {
+        "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
+        "RAISE_EXCEPTION": False,
+        "FORCE_ERROR_MESSAGE_ARGUMENT": False,
+        "FORCE_INFO_MESSAGE_ARGUMENT": True,
     }
 }

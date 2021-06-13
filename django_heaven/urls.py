@@ -13,6 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import sys
+
 from django.conf import settings
 from django.urls import path
 
@@ -27,7 +29,7 @@ try:
 except ImportError:
     has_rest = False
 
-if not settings.DEBUG:
+if not settings.DEBUG and 'test' not in sys.argv:
     raise Warning("Do not use django-heaven testing views in production!")
 
 

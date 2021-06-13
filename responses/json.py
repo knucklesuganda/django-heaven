@@ -40,6 +40,8 @@ class LoggedJsonResponseProxyMixin(BaseLoggedResponseProxyMixin):
                 )
         except json.JSONDecodeError:
             raise ValueError(f"Data provided in JsonResponse() cannot be decoded. Data: {data}")
+        except (AttributeError, TypeError, ValueError):
+            raise ValueError(f"Provide only JsonResponse() objects in LoggedJsonResponseProxyMixin()")
 
     def log_response_as_info(self, data, log_message: str, *args, **kwargs):
         self.test_response_is_safe(data)
