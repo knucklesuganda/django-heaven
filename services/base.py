@@ -5,94 +5,35 @@ Instead, your code will have different services for various models. Every servic
 ORM queries with logging and custom error handling. That is, you will split your views and serializers
 to work with business logic in services.
 """
-from functools import wraps
-
 from django.conf import settings
 from django.db.models import Model
-from django.core.exceptions import FieldError
 
 from services.exceptions import ServiceException, ServiceProgrammingException
+from services.decorators import ServiceFunctionDecorator, service_function_for_write
 
 SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
-
-
-def service_function_decorator(function: callable):
-    """
-    That decorator is used on every service function. It either runs the functions,
-    logs the result and returns it, or logs the result in service_function_error_handler().
-
-    You need to provide named-only arguments called: 'error_message' and 'info_message'.
-    These arguments act as the log messages that we will use in error or success scenarios.
-    If you don't want to provide an argument, then try tuning
-    settings.DJANGO_HEAVEN.SERVICES.FORCE_ERROR_MESSAGE_ARGUMENT argument and the same one
-    with INFO instead of ERROR.
-
-    returned_result_in_info is another argument that you may provide. If so, we will
-    automatically replace %result% substring in the info message with the result returned from the
-    function().
-    """
-    force_error_message_arg = SERVICES_SETTINGS.get('FORCE_ERROR_MESSAGE_ARGUMENT', True)
-    force_info_message_arg = SERVICES_SETTINGS.get('FORCE_INFO_MESSAGE_ARGUMENT', True)
-
-    @wraps(function)
-    def service_function_decorator_wrapper(self, *args, **kwargs):
-        nonlocal function
-        error_message = kwargs.get('error_message')
-        info_message = kwargs.get('info_message')
-
-        if force_error_message_arg:
-            if error_message is None:
-                raise ValueError("You must provide error_message argument")
-            del kwargs['error_message']     # We delete it so it does not interfere with other ORM arguments.
-
-        if force_info_message_arg:
-            if info_message is None:
-                raise ValueError("You must provide info_message argument")
-            del kwargs['info_message']      # We delete it so it does not interfere with other ORM arguments.
-
-        returned_result_in_info = kwargs.get('returned_result_in_info')
-        if returned_result_in_info:
-            del kwargs['returned_result_in_info']
-
-        try:
-            result = function(self, *args, **kwargs)
-
-            if info_message is not None:
-                if returned_result_in_info:
-                    info_message = info_message.replace('$result$', str(result))
-
-                self.logger_obj.info(info_message)
-
-            return result
-
-        except (FieldError, ServiceProgrammingException) as exc:
-            # Field error is related to the wrong arguments, that may be typo,
-            # so we don't want to except these as the normal exception
-            raise exc
-        except Exception as exc:
-            if error_message is not None:
-                self.logger_obj.error(error_message)
-
-            return self.service_function_error_handler(exc=exc)
-
-    return service_function_decorator_wrapper
 
 
 class BaseService:
     """ The most base service for the django-heaven. Use that instead of direct model calls """
     model: Model = None    # your django ORM model
-    write_only: bool = False  # if you only want to read from that model. May be useful for the read-only models
+    read_only: bool = False  # if you only want to read from that model. May be useful for the read-only models
     raise_exception: bool = SERVICES_SETTINGS.get('RAISE_EXCEPTION', True)
     logger_obj = SERVICES_SETTINGS.get('LOGGER_OBJ')
 
-    def __init__(self, objects=None):
+    def __init__(self, objects=None, instance=None):
         class_name = self.__class__.__name__
-        self.objects = objects or self.model.objects
+        self._objects = objects or self.model.objects
 
         if self.model is None:
             raise ValueError(f"You need to assign model in {class_name}")
-        elif not isinstance(self.write_only, bool):
+        elif not isinstance(self.read_only, bool):
             raise ValueError(f"'write_only' must be a bool() value in {class_name}")
+
+    @property
+    def result(self):
+        """ Return the result of the service """
+        return self._objects
 
     def service_function_error_handler(self, exc: Exception):
         """
@@ -104,45 +45,48 @@ class BaseService:
         if self.raise_exception:
             raise ServiceException(exc)
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def get(self, *args, **model_fields):
         if not args and not model_fields:
             raise ServiceProgrammingException("You need to provide *args or **kwargs in service get() function")
 
-        return self.objects.get(*args, **model_fields)
+        return self._objects.get(*args, **model_fields)
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def filter(self, *args, **model_fields):
-        return self.objects.filter(*args, **model_fields)
+        return self._objects.filter(*args, **model_fields)
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def all(self):
-        return self.objects.all()
+        return self._objects.all()
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def order_by(self, *args):
-        return self.objects.order_by(*args)
+        return self._objects.order_by(*args)
 
-    def _get_instance_from_kwargs(self, kwargs):
+    def _get_argument_from_kwargs(self, kwargs: dict, argument: str):
         try:
-            return kwargs['instance']
+            return kwargs[argument]
         except KeyError:
-            raise ServiceProgrammingException("You must provide named-only argument 'instance' in update()")
+            raise ServiceProgrammingException(
+                f"You must provide named-only argument '{argument}' in {self.__class__.__name__}",
+            )
 
     def refresh_from_db(self, **kwargs):
         """ Use that in order to refresh your model from the database"""
-        instance = self._get_instance_from_kwargs(kwargs)
+        instance = self._get_argument_from_kwargs(kwargs=kwargs, argument='instance')
         return instance.refresh_from_db(fields=kwargs.get('fields'), using=kwargs.get('using'))
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def first(self):
-        return self.objects.first()
+        return self._objects.first()
 
-    @service_function_decorator
+    @ServiceFunctionDecorator()
     def last(self):
-        return self.objects.last()
+        return self._objects.last()
 
-    @service_function_decorator
+    @service_function_for_write
+    @ServiceFunctionDecorator()
     def update(self, **kwargs):
         """
         Provide named-only argument 'instance' that will act as an instance you want to update.
@@ -152,7 +96,7 @@ class BaseService:
             - instance!: the instance that you want to update
             - using: what database you want to use
         """
-        instance = self._get_instance_from_kwargs(kwargs)
+        instance = self._get_argument_from_kwargs(kwargs=kwargs, argument='instance')
         using_argument: str = kwargs.get('using')
 
         for field, value in kwargs.items():
@@ -169,14 +113,46 @@ class BaseService:
         """
         return self.model.objects.create
 
-    @service_function_decorator
+    @service_function_for_write
+    @ServiceFunctionDecorator()
     def create(self, *args, **kwargs):
         """Provide arguments to create an instance of your model."""
         instance = self.model_create_method()(*args, **kwargs)
         return instance
 
-    @service_function_decorator
+    @service_function_for_write
+    @ServiceFunctionDecorator()
     def delete(self, **kwargs):
-        instance = self._get_instance_from_kwargs(kwargs)
+        """ Delete an instance of your model """
+        instance = self._get_argument_from_kwargs(kwargs, argument='instance')
         instance.delete()
-        return True
+
+    def _bulk_operation(self, bulk_function, **kwargs):
+        instances = self._get_argument_from_kwargs(kwargs, 'instances')
+        return bulk_function([
+            self.model(**instance) for instance in instances
+        ], **kwargs.get('arguments'))
+
+    @service_function_for_write
+    @ServiceFunctionDecorator()
+    def bulk_create(self, **kwargs):
+        """
+        Use that to create a lot of models at once.
+        Provide kwargs in that order:
+        instances=[
+            {"arg" 1},
+            {"arg": 2}
+        ]
+        """
+        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
+
+    @service_function_for_write
+    @ServiceFunctionDecorator
+    def bulk_update(self, **kwargs):
+        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
+
+    def __str__(self):
+        return f"{self.__class__.__name__} <{self.result}>"
+
+    def __repr__(self):
+        return str(self)
