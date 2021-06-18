@@ -2,7 +2,7 @@
 from django.http import JsonResponse
 
 from django_heaven.examples._base import HeavenTestView
-from responses.json import LoggedJsonResponseMixin, LoggedJsonResponseProxyMixin
+from responses.json import LoggedJsonResponseMixin
 
 
 class HeavenTestJsonView(LoggedJsonResponseMixin, HeavenTestView):
@@ -10,6 +10,6 @@ class HeavenTestJsonView(LoggedJsonResponseMixin, HeavenTestView):
     success_data = "OK"
 
 
-class HeavenTestJsonProxyView(LoggedJsonResponseProxyMixin, HeavenTestView):
+class HeavenTestJsonProxyView(LoggedJsonResponseMixin, HeavenTestView):
     error_data = JsonResponse({"errors": "Proxy error", "reason": "because"})
     success_data = JsonResponse({"hello": "Proxy success"})

@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    #'rest_framework',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -173,7 +173,7 @@ DJANGO_HEAVEN = {
     "RESPONSES": {
         #"DEFAULT_RESPONSE_VERB": "message",
         "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
-        "RAW_TYPES": (int, str, bytes, list),
+        "RAW_TYPES": (int, str, bytes, list, dict),
     },
     "SERVICES": {
         "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),

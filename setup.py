@@ -1,5 +1,5 @@
 import os
-from setuptools import find_packages, setup
+from setuptools import setup
 
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
@@ -7,15 +7,21 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
 
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+requirements = [
+    'django',
+]
+
 setup(
     name='django-heaven',
-    version='0.1',
-    packages=find_packages(),
+    version='0.0.2',
+    packages=['responses', 'services'],
     include_package_data=True,
+    install_requires=requirements,
     license='MIT License',
     description='django-heaven brings structure and order to your django projects',
     long_description=README,
-    url='https://www.example.com/',
+    long_description_content_type="text/markdown",
+    url='https://github.com/knucklesuganda/django-heaven/',
     author='Andrey Ivanov',
     author_email='python.on.papyrus@gmail.com',
     classifiers=[

@@ -19,9 +19,9 @@ from django.conf import settings
 from django.urls import path
 
 from django_heaven.examples.http import HeavenTestHttpView
-from django_heaven.examples.json import HeavenTestJsonView, HeavenTestJsonProxyView
-from django_heaven.examples.redirect import HeavenTestRedirectView, HeavenTestRedirectProxyView
 from django_heaven.examples.general import HeavenTestAPIView
+from django_heaven.examples.redirect import HeavenTestRedirectView
+from django_heaven.examples.json import HeavenTestJsonView, HeavenTestJsonProxyView
 
 try:
     from django_heaven.examples.rest_framework import HeavenTestRESTProxyView, HeavenTestRESTView
@@ -47,7 +47,6 @@ urlpatterns = [
 
     # redirect
     path('example/redirect/', HeavenTestRedirectView.as_view(), name='example_redirect'),
-    path('example/redirect/proxy/', HeavenTestRedirectProxyView.as_view(), name='example_redirect_proxy'),
 ]
 
 if has_rest:

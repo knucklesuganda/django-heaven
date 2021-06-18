@@ -4,7 +4,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 
-from responses.base import BaseLoggedResponseMixin, BaseLoggedResponseProxyMixin
+from responses.base import BaseLoggedResponseMixin
 
 
 class LoggedJsonResponseMixin(BaseLoggedResponseMixin):
@@ -12,26 +12,7 @@ class LoggedJsonResponseMixin(BaseLoggedResponseMixin):
     Use that class in order to create a new JsonResponse() with structured data inside. Mind that
     I always use safe=False, since it is not a great idea from my point of view, and heaven must be a safe place.
     """
-    def log_response_as_info(self, data, log_message: str, encoder=DjangoJSONEncoder, *args, **kwargs):
-        result_response = super(LoggedJsonResponseMixin, self).log_response_as_info(
-            data=data, log_message=log_message, *args, **kwargs,
-        )
-        return JsonResponse(result_response, encoder=encoder, safe=True)
-
-    def log_response_as_error(self, data, log_message: str, encoder=DjangoJSONEncoder, *args, **kwargs):
-        result_response = super(LoggedJsonResponseMixin, self).log_response_as_error(
-            data=data, log_message=log_message, *args, **kwargs,
-        )
-        return JsonResponse(result_response, encoder=encoder, safe=True)
-
-
-class LoggedJsonResponseProxyMixin(BaseLoggedResponseProxyMixin):
-    """
-    That class is used as a proxy for already built JsonResponse() objects. But, again, we check
-    safe=True because the heaven must be safe.
-    """
-
-    def test_response_is_safe(self, data):
+    def check_response_is_safe(self, data):
         """ Tests that the JsonResponse() is a safe one """
         try:
             if not isinstance(json.loads(data.content), dict):
@@ -43,22 +24,38 @@ class LoggedJsonResponseProxyMixin(BaseLoggedResponseProxyMixin):
         except (AttributeError, TypeError, ValueError):
             raise ValueError(f"Provide only JsonResponse() objects in LoggedJsonResponseProxyMixin()")
 
-    def log_response_as_info(self, data, log_message: str, *args, **kwargs):
-        self.test_response_is_safe(data)
+    def _log_json_response(
+        self, log_function: callable, data, log_message: str, encoder=DjangoJSONEncoder, **kwargs,
+    ):
+        """ That function is used not to copy the code that we use in log_info and log_error """
+        result_response = log_function(data=data, log_message=log_message, **kwargs)
 
-        return super(LoggedJsonResponseProxyMixin, self).log_response_as_info(
-            data=data, log_message=log_message, *args, **kwargs
+        if isinstance(data, JsonResponse):
+            self.check_response_is_safe(data)
+            return data
+
+        return JsonResponse(result_response, encoder=encoder, safe=True,
+                            **(kwargs.get('response_kwargs') or {}))
+
+    def log_response_as_info(self, data, log_message: str, encoder=DjangoJSONEncoder, **kwargs):
+        return self._log_json_response(
+            log_function=super(LoggedJsonResponseMixin, self).log_response_as_error,
+            data=data,
+            log_message=log_message,
+            encoder=encoder,
+            **kwargs,
         )
 
-    def log_response_as_error(self, data, log_message: str, *args, **kwargs):
-        self.test_response_is_safe(data)
-
-        return super(LoggedJsonResponseProxyMixin, self).log_response_as_info(
-            data=data, log_message=log_message, *args, **kwargs
+    def log_response_as_error(self, data, log_message: str, encoder=DjangoJSONEncoder, **kwargs):
+        return self._log_json_response(
+            log_function=super(LoggedJsonResponseMixin, self).log_response_as_error,
+            data=data,
+            log_message=log_message,
+            encoder=encoder,
+            **kwargs,
         )
 
 
 __all__ = [
     'LoggedJsonResponseMixin',
-    'LoggedJsonResponseProxyMixin',
 ]

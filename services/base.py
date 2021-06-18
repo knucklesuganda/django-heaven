@@ -152,7 +152,7 @@ class BaseService:
         return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
 
     def __str__(self):
-        return f"{self.__class__.__name__} <{self.result}>"
+        return f"{{{self.__class__.__name__} {self.result}}}"
 
     def __repr__(self):
         return str(self)

@@ -1,11 +1,11 @@
 """ That file contains examples for responses.http response classes """
 from django.http import HttpResponse
 
-from responses.http import LoggedHttpResponseProxyMixin
+from responses.http import LoggedHttpResponseMixin
 from django_heaven.examples._base import HeavenTestView
 
 
-class HeavenTestHttpView(LoggedHttpResponseProxyMixin, HeavenTestView):
+class HeavenTestHttpView(LoggedHttpResponseMixin, HeavenTestView):
     """
     That view will teach you how to use LoggedHttpResponseProxyMixin.
     We will not return render() function, but you can totally do it.

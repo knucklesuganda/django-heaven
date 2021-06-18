@@ -10,18 +10,20 @@ class BaseLoggedResponseMixin:
     That class helps you bring all your responses to the similar structure and log the results.
     We follow the simple rule: if your data is an instance of any item of
     settings.DJANGO_HEAVEN.RESPONSES.RAW_TYPES, then we convert it to a dictionary, or using
-    self.data_conversion_function()
+    self.data_conversion_function().
     """
-    logger_obj = RESPONSES_SETTINGS.get('LOGGER_OBJ')
+    logger_obj = RESPONSES_SETTINGS['LOGGER_OBJ']
+    excluded_conversion_types = None   # optional argument for the proxy responses
+    raw_types = None
 
-    def data_conversion_function(self, data, *args, **kwargs):
+    def data_conversion_function(self, data, **kwargs):
         """
         That function accepts the raw data from the self._log_response() and uses it
         to convert it to a similar structured responses.
         """
-        return {RESPONSES_SETTINGS.get('DEFAULT_RESPONSE_VERB', "detail"): data}
+        return {RESPONSES_SETTINGS['DEFAULT_RESPONSE_VERB']: data}
 
-    def _log_response(self, log_function: callable, data, log_message: str, *args, **kwargs):
+    def _log_response(self, log_function: callable, data, log_message: str, **kwargs):
         """
         That function is used to log the response and return your converted data.
         Do not use it directly, create a wrapper that will work with it internally or
@@ -37,12 +39,12 @@ class BaseLoggedResponseMixin:
         """
         log_function(log_message)
 
-        if isinstance(data, RESPONSES_SETTINGS.get('RAW_TYPES', (str, int, bytes))):
-            data = self.data_conversion_function(data)
+        if isinstance(data, (self.raw_types or RESPONSES_SETTINGS['RAW_TYPES'])):
+            data = self.data_conversion_function(data, **kwargs)
 
         return data
 
-    def log_response_as_info(self, data, log_message: str, *args, **kwargs):
+    def log_response_as_info(self, data, log_message: str, **kwargs):
         """
         That function helps you to log the response as an informational message.
         Parameters are the same as the are in the _log_response() function
@@ -51,9 +53,10 @@ class BaseLoggedResponseMixin:
             data=data,
             log_function=self.logger_obj.info,
             log_message=log_message,
+            **kwargs,
         )
 
-    def log_response_as_error(self, data, log_message: str, *args, **kwargs):
+    def log_response_as_error(self, data, log_message: str, **kwargs):
         """
         That function helps you to log the response as an error message.
         Parameters are the same as the are in the _log_response() function
@@ -62,37 +65,10 @@ class BaseLoggedResponseMixin:
             data=data,
             log_function=self.logger_obj.error,
             log_message=log_message,
+            **kwargs,
         )
 
 
-class BaseLoggedResponseProxyMixin(BaseLoggedResponseMixin):
-    """
-    That class is really similar to BaseLoggedResponseMixin, but instead of the response construction
-    we directly provide what we want to return. That may be useful if your responses come from different
-    modules, have cookies or sessions in them. You can directly use that class, but you will find
-    ancestors with difference in class names only. That is used in order to bring more descriptive
-    names to classes in the real projects.
-    """
-
-    def data_conversion_function(self, data, *args, **kwargs):
-        return data
-
-    def log_response_as_info(self, data, log_message: str, *args, **kwargs):
-        """
-        That function helps you to log the response as an informational message.
-        Parameters are the same as the are in the _log_response() function
-        """
-        super(BaseLoggedResponseProxyMixin, self).log_response_as_info(
-            data=data, log_message=log_message, *args, **kwargs,
-        )
-        return data
-
-    def log_response_as_error(self, data, log_message: str, *args, **kwargs):
-        """
-        That function helps you to log the response as an error message.
-        Parameters are the same as the are in the _log_response() function
-        """
-        super(BaseLoggedResponseProxyMixin, self).log_response_as_error(
-            data=data, log_message=log_message, *args, **kwargs,
-        )
-        return data
+__all__ = [
+    'BaseLoggedResponseMixin',
+]

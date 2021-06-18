@@ -10,17 +10,12 @@ SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
 
 
 class ServiceFunctionDecorator:
-    force_error_message = SERVICES_SETTINGS.get('FORCE_ERROR_MESSAGE_ARGUMENT', True)
-    force_info_message = SERVICES_SETTINGS.get('FORCE_INFO_MESSAGE_ARGUMENT', True)
-
     def __init__(
-        self, force_error_message: bool = None, force_info_message: bool = None,
+        self, force_error_message: bool = SERVICES_SETTINGS.get('FORCE_ERROR_MESSAGE_ARGUMENT', True),
+        force_info_message: bool = SERVICES_SETTINGS.get('FORCE_INFO_MESSAGE_ARGUMENT', True),
     ):
-
-        if force_error_message is not None:
-            self.force_error_message = force_error_message
-        if force_info_message is not None:
-            self.force_info_message = force_info_message
+        self.force_error_message = force_error_message
+        self.force_info_message = force_info_message
 
     def __logger_argument_check_forced(self, argument_name: str, kwargs):
         """ Checks that the appropriate logger argument is provided if the user set is as forced """
@@ -66,7 +61,7 @@ class ServiceFunctionDecorator:
             self.__logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
 
             try:
-                new_service = service.__class__(objects=service.function(self, *args, **kwargs))
+                new_service = service.__class__(objects=function(service, *args, **kwargs))
 
                 if info_message is not None:
                     service.logger_obj.info(self.format_logger_message(info_message, new_service))

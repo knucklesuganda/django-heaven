@@ -5,32 +5,42 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 
-from responses.rest_framework import LoggedRESTResponseMixin, LoggedRESTResponseProxyMixin
+from responses.rest_framework import LoggedRESTResponseMixin
 
 
-class HeavenTestRESTView(LoggedRESTResponseMixin, ListAPIView):
+class CustomLoggedRESTResponseMixin(LoggedRESTResponseMixin):
+    def data_conversion_function(self, data, *args, **kwargs):
+        return {
+            "data": data,
+            "status_code": kwargs.get('status_code'),
+            "errors": kwargs.get('errors'),
+        }
+
+
+class HeavenTestRESTView(CustomLoggedRESTResponseMixin, ListAPIView):
     def list(self, request, *args, **kwargs):
         if randint(0, 1):
             return self.log_response_as_error(
                 data={"rest_error": "Framework error"},
-                log_message="REST error in test proxy view",
+                log_message="REST error in test view",
                 status_code=status.HTTP_400_BAD_REQUEST,
+                errors={"error1": "hello"},
             )
 
         return self.log_response_as_info(
             data="REST success in test view",
-            log_message="REST success in test proxy view",
+            log_message="REST success in test view",
             status_code=status.HTTP_200_OK,
         )
 
 
-class HeavenTestRESTProxyView(LoggedRESTResponseProxyMixin, ListAPIView):
+class HeavenTestRESTProxyView(LoggedRESTResponseMixin, ListAPIView):
     queryset = []
 
     def list(self, request, *args, **kwargs):
         if randint(0, 1):
             return self.log_response_as_error(
-                data=Response({"rest_error": "REST proxy error"}),
+                data=Response("Rest proxy error"),
                 log_message="REST error in test proxy view",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
@@ -40,3 +50,4 @@ class HeavenTestRESTProxyView(LoggedRESTResponseProxyMixin, ListAPIView):
             log_message="REST success in test proxy view",
             status_code=status.HTTP_200_OK,
         )
+
