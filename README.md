@@ -69,10 +69,12 @@ urlpatterns += [
 2) Response proxy - you provide the response object, we validate it and log the messages
 
 #### Response Creation Example
+```python
     return self.log_response_as_error(
         data=[1, 2, 3],
         log_message="User retrieved 1, 2, 3",
     )
+```
 
 In that case, we log an error and provide raw data that will
 be converted to a normal response in return. If you work in your own views, and create your own responses, 
@@ -80,10 +82,12 @@ then you will use Response Creation technique.
 
 
 #### Response Proxy Example
+```python
     return self.log_response_as_info(
         data=JsonResponse({"message": "ok"}),
         log_message="User retrieved 1, 2, 3",
     )
+```
 
 In that case, we log an info and provide already created response. Our response mixin
 will not change it, and we will just receive the same response at the end.
