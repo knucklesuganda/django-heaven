@@ -7,11 +7,11 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
-requirements = open("requirements.txt", "r").split("\n")
+requirements = open("requirements/base_requirements.txt", "r").read().split("\n")
 
 setup(
     name='django-heaven',
-    version='0.0.2',
+    version='0.0.3',
     packages=['responses', 'services'],
     include_package_data=True,
     install_requires=requirements,
