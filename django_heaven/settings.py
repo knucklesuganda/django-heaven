@@ -9,10 +9,13 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import logging
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from sys import stdout
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -37,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -49,13 +54,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'django_heaven.urls'
+ROOT_URLCONF = 'responses.examples.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -124,3 +128,57 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TEST_LOGGER_NAME = 'test_logger'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'full': {
+            'format': '[{module} {asctime} {levelname}] {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'full',
+        },
+    },
+
+    'loggers': {
+        TEST_LOGGER_NAME: {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    }
+
+}
+
+test_logger = logging.getLogger(TEST_LOGGER_NAME)
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+}
+
+
+DJANGO_HEAVEN = {
+    "RESPONSES": {
+        "DEFAULT_RESPONSE_VERB": "detail",
+        "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
+        "RAW_TYPES": (int, str, bytes, list, dict),
+    },
+    "SERVICES": {
+        "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
+        "RAISE_EXCEPTION": False,
+        "DEFAULT_ERROR_LOG_MESSAGE": "An error happened",
+        "FORCE_ERROR_MESSAGE_ARGUMENT": False,
+        "FORCE_INFO_MESSAGE_ARGUMENT": True,
+    }
+}
