@@ -16,21 +16,13 @@ class LoggedRESTResponseMixin(BaseLoggedResponseMixin):
     It will create a new Response() object from the data that you supplied,
     and after that it will pass status_code and *args with **kwargs inside of it.
     """
-
-    def _log_rest_response(
-        self, log_function: callable, data, log_message: str, status_code: int, **kwargs,
-    ):
-        result_data = log_function(data=data, log_message=log_message, **kwargs)
-        if isinstance(data, Response):
-            return data
-
-        return Response(data=result_data, status=status_code, **(kwargs.get('response_kwargs') or {}))
+    response_type = Response
 
     @no_type_check
     def log_response_as_error(
         self, data, log_message: str, status_code: int, **kwargs,
     ) -> Response:
-        return self._log_rest_response(
+        return self.log_response_proxy_or_creation(
             log_function=super(LoggedRESTResponseMixin, self).log_response_as_error,
             data=data,
             log_message=log_message,
@@ -42,7 +34,7 @@ class LoggedRESTResponseMixin(BaseLoggedResponseMixin):
     def log_response_as_info(
         self, data, log_message: str, status_code: int, **kwargs,
     ) -> Response:
-        return self._log_rest_response(
+        return self.log_response_proxy_or_creation(
             log_function=super(LoggedRESTResponseMixin, self).log_response_as_info,
             data=data,
             log_message=log_message,

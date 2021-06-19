@@ -12,7 +12,6 @@ class HeavenTestAPIView(View):
             'example_json',
             'example_json_proxy',
             'example_redirect',
-            'example_redirect_proxy',
         )]
 
         try:

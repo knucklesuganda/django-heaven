@@ -19,10 +19,12 @@ class ServiceFunctionDecorator:
 
     def __logger_argument_check_forced(self, argument_name: str, kwargs):
         """ Checks that the appropriate logger argument is provided if the user set is as forced """
-        if getattr(self, f"force{argument_name}", False):
+        if getattr(self, f"force_{argument_name}", False):
             if kwargs.get(argument_name) is None:
                 raise ValueError(f"You must provide {argument_name} argument")
-            del kwargs[argument_name]  # We delete it so it does not interfere with other ORM arguments.
+            del kwargs[argument_name]
+
+        return kwargs
 
     def format_logger_message(self, message: str, resulted_service) -> str:
         """ Use that function in order to format your message. __format__ will be implemented in the future """
@@ -33,7 +35,7 @@ class ServiceFunctionDecorator:
             ("$service$", resulted_service),
             ("$result$", resulted_service.result),
         ):
-            message = message.replace(replace_key, replace_value)
+            message = message.replace(replace_key, str(replace_value))
 
         return message
 
@@ -57,14 +59,18 @@ class ServiceFunctionDecorator:
             error_message = kwargs.get('error_message')
             info_message = kwargs.get('info_message')
 
-            self.__logger_argument_check_forced(argument_name='info_message', kwargs=kwargs)
-            self.__logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
+            kwargs = self.__logger_argument_check_forced(argument_name='info_message', kwargs=kwargs)
+            kwargs = self.__logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
+
+            # We delete it so it does not interfere with other ORM arguments.
 
             try:
                 new_service = service.__class__(objects=function(service, *args, **kwargs))
 
                 if info_message is not None:
-                    service.logger_obj.info(self.format_logger_message(info_message, new_service))
+                    service.logger_obj.info(
+                        self.format_logger_message(info_message, new_service),
+                    )
 
                 return new_service
 
@@ -73,7 +79,12 @@ class ServiceFunctionDecorator:
                 # so we don't want to except these as the normal exception
                 raise exc
             except Exception as exc:
-                service.logger_obj.error(self.format_logger_message(error_message, None))
+                error_message = error_message or SERVICES_SETTINGS['DEFAULT_ERROR_LOG_MESSAGE']
+
+                if settings.DEBUG:  # We add the exception to the log in DEBUG mode
+                    error_message += f". Exception: {exc}"
+
+                service.logger_obj.error(self.format_logger_message(error_message, None,))
                 return service.service_function_error_handler(exc=exc)
 
         return service_function_decorator_wrapper

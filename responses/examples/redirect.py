@@ -1,10 +1,8 @@
 """ That file contains examples for responses.redirect response classes """
 from random import randint
 
-from django.http import HttpResponseRedirect
-
 from responses.redirect import LoggedRedirectResponseMixin
-from django_heaven.examples._base import HeavenTestView
+from responses.examples.base import HeavenTestView
 
 
 class HeavenTestRedirectView(LoggedRedirectResponseMixin, HeavenTestView):
@@ -16,13 +14,13 @@ class HeavenTestRedirectView(LoggedRedirectResponseMixin, HeavenTestView):
     def get(self, request):
         if randint(0, 1):
             return self.log_response_as_error(
-                redirect_to='https://google.com/',
+                data='https://google.com/',
                 log_message="Redirected to google",
                 redirect_code=302,
             )
 
         return self.log_response_as_info(
-            redirect_to='https://example.com/',
+            data='https://example.com/',
             log_message="Redirected to example",
             redirect_code=302,
         )

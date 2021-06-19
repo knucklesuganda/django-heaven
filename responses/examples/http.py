@@ -2,7 +2,7 @@
 from django.http import HttpResponse
 
 from responses.http import LoggedHttpResponseMixin
-from django_heaven.examples._base import HeavenTestView
+from responses.examples.base import HeavenTestView
 
 
 class HeavenTestHttpView(LoggedHttpResponseMixin, HeavenTestView):
@@ -14,3 +14,6 @@ class HeavenTestHttpView(LoggedHttpResponseMixin, HeavenTestView):
     """
     success_data = HttpResponse("<i>Success</i>")
     error_data = HttpResponse("<b>Error</b>")
+
+
+

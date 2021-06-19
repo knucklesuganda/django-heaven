@@ -1,47 +1,50 @@
 from django.http import JsonResponse
 
-from responses.json import LoggedJsonResponseMixin, LoggedJsonResponseProxyMixin
+from responses.exceptions import ResponseProgrammingException
+from responses.json import LoggedJsonResponseMixin
 from responses.tests.base import BaseLoggedResponseMixinTest
 
 
 class LoggedJsonResponseMixinTest(BaseLoggedResponseMixinTest):
     """ That is the tests for the LoggedJsonResponseMixin responses """
     testing_class = LoggedJsonResponseMixin
-    is_proxy = False
 
     info_data = [1, 2, 3]
     error_data = [4, 5, 6]
 
-
-class LoggedJsonResponseProxyMixinTest(BaseLoggedResponseMixinTest):
-    testing_class = LoggedJsonResponseProxyMixin
-    is_proxy = True
-
-    info_data = JsonResponse(data={"message": "Hello"})
-    error_data = JsonResponse(data={"really": "yes"})
-
-    def test_safe_is_true_only(self):
+    def test_proxy_safe_is_true_only(self):
         try:
-            self.response_class.log_response_as_info(data=self.info_data, log_message="Test log message")
-            self.response_class.log_response_as_error(data=self.info_data, log_message="Test log message")
+            self.response_class.log_response_as_info(
+                data=JsonResponse({"data": self.info_data}),
+                log_message="Test log message",
+                status_code=200,
+            )
+            self.response_class.log_response_as_error(
+                data=JsonResponse({"data": self.info_data}),
+                log_message="Test log message",
+                status_code=200,
+            )
         except Exception as exc:
             self.fail(exc)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ResponseProgrammingException):
             self.response_class.log_response_as_info(
                 data=JsonResponse(data=[1, 2, 3], safe=False),
                 log_message="Test log message",
+                status_code=200,
             )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ResponseProgrammingException):
             self.response_class.log_response_as_error(
                 data=JsonResponse(data=[1, 2, 3], safe=False),
                 log_message="Test log message",
+                status_code=200,
             )
 
-    def test_wrong_data_provided_raises_value_error(self):
-        with self.assertRaises(ValueError):
-            self.response_class.log_response_as_info(data=[1, 2, 3], log_message="Test log message")
+    def test_proxy_response_validation_function(self):
+        with self.assertRaises(ResponseProgrammingException):
+            self.testing_class().proxy_response_validation(
+                JsonResponse(data=[1, 2, 3], safe=False), status_code=200,
+            )
 
-        with self.assertRaises(ValueError):
-            self.response_class.log_response_as_error(data=[1, 2, 3], log_message="Test log message")
+        self.testing_class().proxy_response_validation(JsonResponse(data={"data": 10}), status_code=200)

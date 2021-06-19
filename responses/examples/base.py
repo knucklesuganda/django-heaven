@@ -22,12 +22,14 @@ class HeavenTestView(View):
             return self.log_response_as_error(
                 data=self.error_data,
                 log_message=f"Wow, that is bad. An error happened in {self.__class__.__name__}()",
+                status_code=1,
             )
 
         # Everything is alright, we can return a normal view
         return self.log_response_as_info(
             data=self.success_data,
             log_message=f"Everything was great in {self.__class__.__name__}()",
+            status_code=1,
         )
 
 

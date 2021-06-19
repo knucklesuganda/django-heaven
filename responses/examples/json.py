@@ -1,7 +1,7 @@
 """ That file contains examples for responses.json response classes """
 from django.http import JsonResponse
 
-from django_heaven.examples._base import HeavenTestView
+from responses.examples.base import HeavenTestView
 from responses.json import LoggedJsonResponseMixin
 
 

@@ -54,13 +54,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'django_heaven.urls'
+ROOT_URLCONF = 'responses.examples.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -171,13 +170,14 @@ REST_FRAMEWORK = {
 
 DJANGO_HEAVEN = {
     "RESPONSES": {
-        #"DEFAULT_RESPONSE_VERB": "message",
+        "DEFAULT_RESPONSE_VERB": "detail",
         "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
         "RAW_TYPES": (int, str, bytes, list, dict),
     },
     "SERVICES": {
         "LOGGER_OBJ": logging.getLogger(TEST_LOGGER_NAME),
         "RAISE_EXCEPTION": False,
+        "DEFAULT_ERROR_LOG_MESSAGE": "An error happened",
         "FORCE_ERROR_MESSAGE_ARGUMENT": False,
         "FORCE_INFO_MESSAGE_ARGUMENT": True,
     }

@@ -13,15 +13,17 @@ class BaseLoggedResponseMixin:
     self.data_conversion_function().
     """
     logger_obj = RESPONSES_SETTINGS['LOGGER_OBJ']
-    excluded_conversion_types = None   # optional argument for the proxy responses
-    raw_types = None
+    raw_types = RESPONSES_SETTINGS['RAW_TYPES']
+    response_type = None
 
     def data_conversion_function(self, data, **kwargs):
         """
         That function accepts the raw data from the self._log_response() and uses it
         to convert it to a similar structured responses.
         """
-        return {RESPONSES_SETTINGS['DEFAULT_RESPONSE_VERB']: data}
+        return {
+            RESPONSES_SETTINGS['DEFAULT_RESPONSE_VERB']: data,
+        }
 
     def _log_response(self, log_function: callable, data, log_message: str, **kwargs):
         """
@@ -39,7 +41,7 @@ class BaseLoggedResponseMixin:
         """
         log_function(log_message)
 
-        if isinstance(data, (self.raw_types or RESPONSES_SETTINGS['RAW_TYPES'])):
+        if isinstance(data, self.raw_types):
             data = self.data_conversion_function(data, **kwargs)
 
         return data
@@ -66,6 +68,27 @@ class BaseLoggedResponseMixin:
             log_function=self.logger_obj.error,
             log_message=log_message,
             **kwargs,
+        )
+
+    def proxy_response_validation(self, data, status_code: int, **kwargs):
+        """ That function works as the additional validation for the response from the outer code. """
+
+    def log_response_proxy_or_creation(
+        self, log_function: callable, data, log_message: str, status_code: int, **kwargs,
+    ):
+        """
+        That is the function that helps you to log your response either creating the
+        response from the data provided or act as a proxy depending on
+        the self.response_base_type variable.
+        """
+        result_data = log_function(data=data, log_message=log_message, **kwargs)
+
+        if isinstance(data, self.response_type):
+            self.proxy_response_validation(data, status_code, **kwargs)
+            return data
+
+        return self.response_type(
+            data=result_data, status=status_code, **(kwargs.get('response_kwargs') or {}),
         )
 
 
