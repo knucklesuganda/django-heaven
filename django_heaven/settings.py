@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'services.examples.apps.ServicesExamplesConfig',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'responses.examples.urls'
+ROOT_URLCONF = 'django_heaven.urls'
 
 TEMPLATES = [
     {
@@ -135,16 +136,15 @@ LOGGING = {
     'disable_existing_loggers': False,
 
     'formatters': {
-        'full': {
-            'format': '[{module} {asctime} {levelname}] {message}',
-            'style': '{',
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
         },
     },
 
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'full',
+            'formatter': 'json',
         },
     },
 

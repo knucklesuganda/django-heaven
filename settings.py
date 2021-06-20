@@ -12,7 +12,7 @@ DEFAULTS = {
     "RESPONSES": {
         "DEFAULT_RESPONSE_VERB": "detail",
         "LOGGER_OBJ": logging,
-        "RAW_TYPES": (int, str, bytes, list, dict),
+        "RAW_TYPES": (int, str, bytes, list),
     },
     "SERVICES": {
         "LOGGER_OBJ": logging,
@@ -21,6 +21,7 @@ DEFAULTS = {
                                      "the default message for the service error",
         "FORCE_ERROR_MESSAGE_ARGUMENT": True,
         "FORCE_INFO_MESSAGE_ARGUMENT": True,
+        "ADD_EXCEPTION_TO_LOG": True,
     }
 }
 
@@ -83,14 +84,14 @@ class DjangoHeavenSettings:
         return val
 
 
-graphene_settings = DjangoHeavenSettings(None, DEFAULTS, IMPORT_STRINGS)
+django_heaven_settings = DjangoHeavenSettings(None, DEFAULTS, IMPORT_STRINGS)
 
 
-def reload_graphene_settings(*args, **kwargs):
-    global graphene_settings
+def reload_heaven_settings(*args, **kwargs):
+    global django_heaven_settings
     setting, value = kwargs["setting"], kwargs["value"]
     if setting == "DJANGO_HEAVEN":
-        graphene_settings = DjangoHeavenSettings(value, DEFAULTS, IMPORT_STRINGS)
+        django_heaven_settings = DjangoHeavenSettings(value, DEFAULTS, IMPORT_STRINGS)
 
 
-setting_changed.connect(reload_graphene_settings)
+setting_changed.connect(reload_heaven_settings)

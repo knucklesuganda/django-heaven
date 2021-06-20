@@ -6,7 +6,7 @@ ORM queries with logging and custom error handling. That is, you will split your
 to work with business logic in services.
 """
 from django.conf import settings
-from django.db.models import Model
+from django.db.models import Model, QuerySet, Manager
 
 from services.exceptions import ServiceException, ServiceProgrammingException
 from services.decorators import ServiceFunctionDecorator, service_function_for_write
@@ -14,26 +14,39 @@ from services.decorators import ServiceFunctionDecorator, service_function_for_w
 SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
 
 
-class BaseService:
+class Service:
     """ The most base service for the django-heaven. Use that instead of direct model calls """
     model: Model = None    # your django ORM model
     read_only: bool = False  # if you only want to read from that model. May be useful for the read-only models
     raise_exception: bool = SERVICES_SETTINGS.get('RAISE_EXCEPTION', True)
     logger_obj = SERVICES_SETTINGS.get('LOGGER_OBJ')
 
-    def __init__(self, objects=None, instance=None):
+    def __init__(self, objects=None):
         class_name = self.__class__.__name__
-        self._objects = objects or self.model.objects
+
+        self.objects = objects if objects is not None else self.model.objects
 
         if self.model is None:
-            raise ValueError(f"You need to assign model in {class_name}")
-        elif not isinstance(self.read_only, bool):
-            raise ValueError(f"'write_only' must be a bool() value in {class_name}")
+            raise ValueError(f"You need to assign a model in {class_name}")
 
     @property
-    def result(self):
+    def objects(self):
         """ Return the result of the service """
         return self._objects
+
+    @objects.setter
+    def objects(self, value):
+        if self.model is not None:
+            type_check_value = value.model if isinstance(value, (QuerySet, Manager)) else type(value)
+
+            if not type_check_value == self.model:
+                raise ServiceProgrammingException(
+                    "Trying to set service objects as the different model type."
+                    f"Your {self.__class__.__name__} works with {self.model}, "
+                    f"  but value is {type(type_check_value)}"
+                )
+
+        self._objects = value
 
     def service_function_error_handler(self, exc: Exception):
         """
@@ -64,7 +77,7 @@ class BaseService:
     def order_by(self, *args):
         return self._objects.order_by(*args)
 
-    def _get_argument_from_kwargs(self, kwargs: dict, argument: str):
+    def get_argument_from_kwargs(self, kwargs: dict, argument: str):
         try:
             return kwargs[argument]
         except KeyError:
@@ -72,9 +85,14 @@ class BaseService:
                 f"You must provide named-only argument '{argument}' in {self.__class__.__name__}",
             )
 
+    def pop_argument_from_kwargs(self, kwargs: dict, argument: str):
+        argument_value = self.get_argument_from_kwargs(kwargs=kwargs, argument=argument)
+        del kwargs[argument]
+        return kwargs, argument_value
+
     def refresh_from_db(self, **kwargs):
         """ Use that in order to refresh your model from the database"""
-        instance = self._get_argument_from_kwargs(kwargs=kwargs, argument='instance')
+        kwargs, instance = self.pop_argument_from_kwargs(kwargs=kwargs, argument='instance')
         return instance.refresh_from_db(fields=kwargs.get('fields'), using=kwargs.get('using'))
 
     @ServiceFunctionDecorator()
@@ -96,7 +114,7 @@ class BaseService:
             - instance!: the instance that you want to update
             - using: what database you want to use
         """
-        instance = self._get_argument_from_kwargs(kwargs=kwargs, argument='instance')
+        kwargs, instance = self.pop_argument_from_kwargs(kwargs=kwargs, argument='instance')
         using_argument: str = kwargs.get('using')
 
         for field, value in kwargs.items():
@@ -124,11 +142,11 @@ class BaseService:
     @ServiceFunctionDecorator()
     def delete(self, **kwargs):
         """ Delete an instance of your model """
-        instance = self._get_argument_from_kwargs(kwargs, argument='instance')
+        instance = self.get_argument_from_kwargs(kwargs, argument='instance')
         instance.delete()
 
     def _bulk_operation(self, bulk_function, **kwargs):
-        instances = self._get_argument_from_kwargs(kwargs, 'instances')
+        instances = self.get_argument_from_kwargs(kwargs, 'instances')
         return bulk_function([
             self.model(**instance) for instance in instances
         ], **kwargs.get('arguments'))
@@ -152,7 +170,7 @@ class BaseService:
         return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
 
     def __str__(self):
-        return f"{{{self.__class__.__name__} {self.result}}}"
+        return f"{{{self.__class__.__name__} {self.objects}}}"
 
     def __repr__(self):
         return str(self)

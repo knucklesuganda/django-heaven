@@ -18,7 +18,7 @@ if not settings.DEBUG and 'test' not in sys.argv:
     raise Warning("Do not use django-heaven testing views in production!")
 
 
-app_name = 'heaven'
+app_name = 'heaven_responses'
 
 urlpatterns = [
     path('example/list/', HeavenTestAPIView.as_view()),

@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
-from services.base import BaseService
+from services.base import Service
 from services.decorators import ServiceFunctionDecorator, service_function_for_write
 
 
-class UserService(BaseService):
+class UserService(Service):
     """ That is the service for the User model of your project """
     model = get_user_model()
 
@@ -31,6 +31,6 @@ class UserService(BaseService):
     def set_password(self, **kwargs):
         """ Use that function to set new user password """
         return self.update(
-            instance=self._get_argument_from_kwargs(kwargs=kwargs, argument='instance'),
+            instance=self.get_argument_from_kwargs(kwargs=kwargs, argument='instance'),
             password=make_password(kwargs.get('password') or kwargs.get('raw_password'))
         )
