@@ -7,7 +7,7 @@ from django.db import models
 from django.http import HttpResponse
 from django.views import View
 
-from services.base import Service     # You will use 'import django_heaven.services'
+from services.services import Service     # You will use 'import django_heaven.services'
 from services.decorators import ServiceFunctionDecorator
 
 # models.py
@@ -20,9 +20,9 @@ class HeavenTestModel(models.Model):
     is_working = models.BooleanField(default=True)
 
 
-#HeavenTestModel.objects.create(name='abc')
-#HeavenTestModel.objects.create(name='def')
-#HeavenTestModel.objects.create(name='ghi')
+HeavenTestModel.objects.create(name='abc')
+HeavenTestModel.objects.create(name='def')
+HeavenTestModel.objects.create(name='ghi')
 # models.py
 
 

@@ -10,18 +10,24 @@ SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
 
 
 class ServiceFunctionDecorator:
-    def __init__(
-        self, force_error_message: bool = SERVICES_SETTINGS.get('FORCE_ERROR_MESSAGE_ARGUMENT', True),
-        force_info_message: bool = SERVICES_SETTINGS.get('FORCE_INFO_MESSAGE_ARGUMENT', True),
-    ):
+    def __init__(self, force_error_message: bool = None, force_info_message: bool = None):
+        if force_error_message is None:
+            force_error_message = SERVICES_SETTINGS['FORCE_ERROR_MESSAGE_ARGUMENT']
+        if force_info_message is None:
+            force_info_message = SERVICES_SETTINGS['FORCE_INFO_MESSAGE_ARGUMENT']
+
         self.force_error_message = force_error_message
         self.force_info_message = force_info_message
 
-    def __logger_argument_check_forced(self, argument_name: str, kwargs):
+    def _logger_argument_check_forced(self, argument_name: str, kwargs):
         """ Checks that the appropriate logger argument is provided if the user set is as forced """
+        argument_value = kwargs.get(argument_name)
+
         if getattr(self, f"force_{argument_name}", False):
-            if kwargs.get(argument_name) is None:
+            if argument_value is None:
                 raise ValueError(f"You must provide {argument_name} argument")
+
+        if argument_value is not None:
             del kwargs[argument_name]
 
         return kwargs
@@ -33,13 +39,13 @@ class ServiceFunctionDecorator:
 
         for replace_key, replace_value in (
             ("$service$", resulted_service),
-            ("$result$", resulted_service.result),
+            ("$objects$", resulted_service.objects),
         ):
             message = message.replace(replace_key, str(replace_value))
 
         return message
 
-    def __call__(self, function):
+    def __call__(self, function: callable):
         """
         That decorator is used on every service function. It either runs the functions,
         logs the result and returns it, or logs the result in service_function_error_handler().
@@ -59,8 +65,8 @@ class ServiceFunctionDecorator:
             error_message = kwargs.get('error_message')
             info_message = kwargs.get('info_message')
 
-            kwargs = self.__logger_argument_check_forced(argument_name='info_message', kwargs=kwargs)
-            kwargs = self.__logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
+            kwargs = self._logger_argument_check_forced(argument_name='info_message', kwargs=kwargs)
+            kwargs = self._logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
 
             # We delete it so it does not interfere with other ORM arguments.
 
@@ -90,6 +96,24 @@ class ServiceFunctionDecorator:
         return service_function_decorator_wrapper
 
 
+class GetObjectsOrInstanceDecorator(ServiceFunctionDecorator):
+    """
+    That is the decorator that you want to use if your function will
+    work with the instance provided in the kwargs, or using the current objects
+    of your service.
+    """
+    def __call__(self, function: callable):
+        function = super(get_objects_or_instance_decorator, self).__call__(function)
+
+        def service_function_objects_or_instance_wrapper(service, *args, **kwargs):
+            if kwargs.get('instance') is None:
+                kwargs['instance'] = service.objects
+
+            return function(service, *args, **kwargs)
+
+        return service_function_objects_or_instance_wrapper
+
+
 def service_function_for_write(function: callable):
     """ That decorator marks service function that can change the information in the database """
 
@@ -103,7 +127,13 @@ def service_function_for_write(function: callable):
     return service_function_for_write_wrapper
 
 
+service_function_decorator = ServiceFunctionDecorator
+get_objects_or_instance_decorator = GetObjectsOrInstanceDecorator
+
 __all__ = [
     'ServiceFunctionDecorator',
+    'get_objects_or_instance_decorator',
+    'service_function_decorator',
+    'get_objects_or_instance_decorator',
     'service_function_for_write',
 ]

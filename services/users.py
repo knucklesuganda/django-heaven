@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
-from services.base import Service
+from services.services import Service
 from services.decorators import ServiceFunctionDecorator, service_function_for_write
 
 
