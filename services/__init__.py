@@ -3,6 +3,7 @@ from services.decorators import (
     service_function_decorator,
     service_function_for_write,
     get_objects_or_instance_decorator,
+    service_function_default_arguments,
 )
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     'service_function_for_write',
     'service_function_decorator',
     'get_objects_or_instance_decorator',
+    'service_function_default_arguments',
 ]
 

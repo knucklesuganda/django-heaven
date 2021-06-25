@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'services.examples.apps.ServicesExamplesConfig',
 ]
 
 MIDDLEWARE = [
@@ -180,5 +179,6 @@ DJANGO_HEAVEN = {
         "DEFAULT_ERROR_LOG_MESSAGE": "An error happened",
         "FORCE_ERROR_MESSAGE_ARGUMENT": False,
         "FORCE_INFO_MESSAGE_ARGUMENT": True,
+        "ADD_EXCEPTION_TO_LOG": True,
     }
 }

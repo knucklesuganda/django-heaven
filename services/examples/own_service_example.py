@@ -20,9 +20,9 @@ class HeavenTestModel(models.Model):
     is_working = models.BooleanField(default=True)
 
 
-HeavenTestModel.objects.create(name='abc')
-HeavenTestModel.objects.create(name='def')
-HeavenTestModel.objects.create(name='ghi')
+#HeavenTestModel.objects.create(name='abc')
+#HeavenTestModel.objects.create(name='def')
+#HeavenTestModel.objects.create(name='ghi')
 # models.py
 
 

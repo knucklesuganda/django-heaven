@@ -27,7 +27,6 @@ class Service:
 
     def __init__(self, objects=None):
         class_name = self.__class__.__name__
-
         self.objects = objects if objects is not None else self.model.objects
 
         if self.model is None:

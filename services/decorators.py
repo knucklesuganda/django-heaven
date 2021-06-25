@@ -67,8 +67,7 @@ class ServiceFunctionDecorator:
 
             kwargs = self._logger_argument_check_forced(argument_name='info_message', kwargs=kwargs)
             kwargs = self._logger_argument_check_forced(argument_name='error_message', kwargs=kwargs)
-
-            # We delete it so it does not interfere with other ORM arguments.
+            # We delete the arguments so they do not interfere with other ORM arguments.
 
             try:
                 new_service = service.__class__(objects=function(service, *args, **kwargs))
@@ -80,10 +79,10 @@ class ServiceFunctionDecorator:
 
                 return new_service
 
-            except (FieldError, ServiceProgrammingException) as exc:
+            except (FieldError, ServiceProgrammingException) as programmer_exc:
                 # Field error is related to the wrong arguments, that may be typo,
                 # so we don't want to except these as the normal exception
-                raise exc
+                raise programmer_exc
             except Exception as exc:
                 error_message = error_message or SERVICES_SETTINGS['DEFAULT_ERROR_LOG_MESSAGE']
 
@@ -127,13 +126,34 @@ def service_function_for_write(function: callable):
     return service_function_for_write_wrapper
 
 
+def service_function_default_arguments(**defaults):
+    """
+    That function provides the default argument into kwargs of the service function
+    you are using. All you need to do is add key and value pairs for the service defaults.
+    """
+
+    def service_function_default_arguments_decorator(function: callable):
+
+        @wraps(function)
+        def service_function_default_argument_wrapper(service, *args, **kwargs):
+            for default_key, default_value in defaults:
+                if kwargs.get(default_key) is None:
+                    kwargs[default_key] = default_value
+
+            return function(service, *args, **kwargs)
+
+        return service_function_default_argument_wrapper
+
+    return service_function_default_arguments_decorator
+
+
 service_function_decorator = ServiceFunctionDecorator
 get_objects_or_instance_decorator = GetObjectsOrInstanceDecorator
 
 __all__ = [
     'ServiceFunctionDecorator',
-    'get_objects_or_instance_decorator',
     'service_function_decorator',
     'get_objects_or_instance_decorator',
     'service_function_for_write',
+    'service_function_default_arguments',
 ]
