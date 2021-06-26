@@ -89,7 +89,9 @@ class ServiceFunctionDecorator:
                 if settings.DEBUG or SERVICES_SETTINGS['ADD_EXCEPTION_TO_LOG']:
                     error_message += f". Exception: {exc}"
 
-                service.logger_obj.error(self.format_logger_message(error_message, None,))
+                service.logger_obj.error(self.format_logger_message(
+                    message=error_message, resulted_service=None,
+                ))
                 return service.service_function_error_handler(exc=exc)
 
         return service_function_decorator_wrapper
