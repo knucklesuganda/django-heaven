@@ -1,11 +1,12 @@
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 
 from services import service_function_decorator
+from services.decorators import ObjectsOrKwargsDecorator, ServiceFunctionDecorator
 from services.exceptions import ServiceProgrammingException
 from services.tests.test_utils import (
     ServiceForTest,
@@ -39,9 +40,7 @@ class TestServiceFunctionDecorator(TestCase):
 
         settings.DJANGO_HEAVEN['SERVICES'][settings_argument_name] = initial_argument_value
 
-    def util_format_logger_message_formatting(
-        self, logger_message, formatting_value, return_value,
-    ):
+    def util_format_logger_message_formatting(self, logger_message, formatting_value, return_value):
         service_decorator = service_function_decorator()
 
         service = ServiceForTest(objects=User.objects.all())
@@ -150,7 +149,7 @@ class TestServiceFunctionDecorator(TestCase):
 
     def test_decorator_call_returns_function(self):
         service_decorator = service_function_decorator()
-        self.assertTrue(callable(service_decorator(lambda a: 10)))
+        self.assertTrue(callable(service_decorator(lambda: None)))
 
     def test_call_service_function_calls_provided_function(self):
         was_called = False
@@ -267,3 +266,30 @@ class TestServiceFunctionDecorator(TestCase):
 
         ServiceForTest.logger_obj.error.assert_called_once()
         ServiceForTest.logger_obj.error.assert_called_with(error_message)
+
+
+class TestGetObjectsOrInstanceDecorator(TestCase):
+    def util_decorate_success_function(self) -> callable:
+        decorator_instance = ObjectsOrKwargsDecorator()
+        return decorator_instance(service_function_success)
+
+    def util_call_decorated_success_function(self):
+        decorated_function = self.util_decorate_success_function()
+        return decorated_function(
+            service=ServiceForTest(), info_message="info message", error_message="error message",
+        )
+
+    def test_service_function_decorator_in_mro(self):
+        self.assertIn(ServiceFunctionDecorator, ObjectsOrKwargsDecorator.mro())
+
+    def test_super_service_function_call_invoked(self):
+        with patch('services.decorators.ServiceFunctionDecorator.__call__') as service_call_function:
+            self.util_call_decorated_success_function()
+            service_call_function.assert_called_once()
+            service_call_function.assert_called_with(service_function_success)
+
+    def test_call_returns_callable(self):
+        self.assertTrue(callable(self.util_decorate_success_function()))
+
+    def test(self):
+        pass

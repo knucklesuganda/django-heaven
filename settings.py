@@ -22,6 +22,11 @@ DEFAULTS = {
         "FORCE_ERROR_MESSAGE_ARGUMENT": True,
         "FORCE_INFO_MESSAGE_ARGUMENT": True,
         "ADD_EXCEPTION_TO_LOG": True,
+        "DECORATORS": {
+            "DEFAULT_OBJECTS_OR_KWARGS_DECORATOR": {
+                "DEFAULT_ARGUMENT_NAME": "instance",
+            }
+        }
     }
 }
 

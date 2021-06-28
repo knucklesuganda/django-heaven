@@ -12,7 +12,7 @@ from services.exceptions import ServiceException, ServiceProgrammingException
 from services.decorators import (
     service_function_decorator,
     service_function_for_write,
-    get_objects_or_instance_decorator,
+    objects_or_kwargs_decorator,
 )
 
 SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
@@ -64,7 +64,9 @@ class Service:
     @service_function_decorator()
     def get(self, *args, **model_fields):
         if not args and not model_fields:
-            raise ServiceProgrammingException("You need to provide *args or **kwargs in service get() function")
+            raise ServiceProgrammingException(
+                "You need to provide *args or **kwargs in service get() function"
+            )
 
         return self.objects.get(*args, **model_fields)
 
@@ -98,16 +100,16 @@ class Service:
         kwargs, instance = self.pop_argument_from_kwargs(kwargs=kwargs, argument='instance')
         return instance.refresh_from_db(fields=kwargs.get('fields'), using=kwargs.get('using'))
 
-    @get_objects_or_instance_decorator()
+    @objects_or_kwargs_decorator()
     def first(self, **kwargs):
-        return kwargs['instance'].first()
+        return kwargs['objects'].first()
 
-    @get_objects_or_instance_decorator()
+    @objects_or_kwargs_decorator()
     def last(self, **kwargs):
-        return kwargs['instance'].last()
+        return kwargs['objects'].last()
 
     @service_function_for_write
-    @get_objects_or_instance_decorator()
+    @objects_or_kwargs_decorator()
     def update(self, **kwargs):
         """
         Provide named-only argument 'instance' that will act as an instance you want to update.
@@ -135,23 +137,23 @@ class Service:
         return self.model.objects.create
 
     @service_function_for_write
-    @get_objects_or_instance_decorator()
+    @objects_or_kwargs_decorator()
     def create(self, *args, **kwargs):
         """Provide arguments to create an instance of your model."""
         instance = self.model_create_method()(*args, **kwargs)
         return instance
 
     @service_function_for_write
-    @get_objects_or_instance_decorator()
+    @objects_or_kwargs_decorator()
     def delete(self, **kwargs):
         """ Delete an instance of your model """
         instance = self.get_argument_from_kwargs(kwargs, argument='instance')
         instance.delete()
 
     def _bulk_operation(self, bulk_function, **kwargs):
-        instances = self.get_argument_from_kwargs(kwargs, 'instances')
+        objects = self.get_argument_from_kwargs(kwargs, 'objects')
         return bulk_function([
-            self.model(**instance) for instance in instances
+            self.model(**instance) for instance in objects
         ], **kwargs.get('arguments'))
 
     @service_function_for_write
@@ -165,12 +167,12 @@ class Service:
             {"arg": 2}
         ]
         """
-        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
+        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs)
 
     @service_function_for_write
     @service_function_decorator()
     def bulk_update(self, **kwargs):
-        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs,)
+        return self._bulk_operation(bulk_function=self.model.objects.bulk_create, **kwargs)
 
     def __str__(self):
         return f"{{{self.__class__.__name__} {self.objects}}}"

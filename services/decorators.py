@@ -7,6 +7,7 @@ from services.exceptions import ServiceProgrammingException
 
 
 SERVICES_SETTINGS = settings.DJANGO_HEAVEN['SERVICES']
+SERVICES_DECORATOR_SETTINGS = SERVICES_SETTINGS['DECORATORS']
 
 
 class ServiceFunctionDecorator:
@@ -61,6 +62,7 @@ class ServiceFunctionDecorator:
         function().
         """
 
+        @wraps(function)
         def service_function_decorator_wrapper(service, *args, **kwargs):
             error_message = kwargs.get('error_message')
             info_message = kwargs.get('info_message')
@@ -97,19 +99,29 @@ class ServiceFunctionDecorator:
         return service_function_decorator_wrapper
 
 
-class GetObjectsOrInstanceDecorator(ServiceFunctionDecorator):
+class ObjectsOrKwargsDecorator(ServiceFunctionDecorator):
     """
     That is the decorator that you want to use if your function will
-    work with the instance provided in the kwargs, or using the current objects
-    of your service.
+    work with the instance provided in the kwargs, or using the current objects of your service.
     """
+    def __init__(
+        self,
+        argument_name: str = SERVICES_DECORATOR_SETTINGS['DEFAULT_OBJECTS_OR_KWARGS_DECORATOR']
+                                                        ['DEFAULT_ARGUMENT_NAME'],
+        force_error_message: bool = None, force_info_message: bool = None,
+    ):
+        super(ObjectsOrKwargsDecorator, self).__init__(
+            force_error_message=force_error_message, force_info_message=force_info_message,
+        )
+        self.argument_name = argument_name
+
     def __call__(self, function: callable):
-        function = super(get_objects_or_instance_decorator, self).__call__(function)
+        function = super(ObjectsOrKwargsDecorator, self).__call__(function)
 
+        @wraps(function)
         def service_function_objects_or_instance_wrapper(service, *args, **kwargs):
-            if kwargs.get('instance') is None:
-                kwargs['instance'] = service.objects
-
+            if kwargs.get(self.argument_name) is None:
+                kwargs[self.argument_name] = service.objects
             return function(service, *args, **kwargs)
 
         return service_function_objects_or_instance_wrapper
@@ -121,7 +133,9 @@ def service_function_for_write(function: callable):
     @wraps(function)
     def service_function_for_write_wrapper(service, *args, **kwargs):
         if service.read_only:
-            raise ServiceProgrammingException(f"You are calling write function on read_only service {service}")
+            raise ServiceProgrammingException(
+                f"You are calling write function on read_only service {service}"
+            )
 
         return function(service, *args, **kwargs)
 
@@ -150,12 +164,12 @@ def service_function_default_arguments(**defaults):
 
 
 service_function_decorator = ServiceFunctionDecorator
-get_objects_or_instance_decorator = GetObjectsOrInstanceDecorator
+objects_or_kwargs_decorator = ObjectsOrKwargsDecorator
 
 __all__ = [
     'ServiceFunctionDecorator',
     'service_function_decorator',
-    'get_objects_or_instance_decorator',
+    'objects_or_kwargs_decorator',
     'service_function_for_write',
     'service_function_default_arguments',
 ]
